@@ -1,0 +1,240 @@
+01.08 9:08 PM
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Calculator with Unit, % & History</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#111;
+  font-family:Arial;
+}
+.app{
+  display:flex;
+  max-width:460px;
+  width:100%;
+  position:relative;
+}
+.calculator{
+  flex:1;
+  background:#000;
+  padding:10px;
+  border-radius:15px 0 0 15px;
+  color:white;
+}
+.unit{
+  width:0;
+  overflow:hidden;
+  background:#222;
+  color:white;
+  transition:0.3s;
+  border-radius:0 15px 15px 0;
+}
+.unit.open{ width:170px; padding:10px; }
+
+.history{
+  position:absolute;
+  right:0;
+  top:0;
+  height:100%;
+  width:0;
+  overflow:hidden;
+  background:#1c1c1c;
+  color:white;
+  transition:0.3s;
+  padding:0;
+}
+.history.open{
+  width:200px;
+  padding:10px;
+}
+
+#display{
+  width:100%;
+  height:45px;
+  font-size:20px;
+  text-align:right;
+  margin-bottom:5px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+button{
+  height:45px;
+  border:none;
+  border-radius:8px;
+  font-size:14px;
+}
+.num{background:#333;color:white;}
+.op{background:#ff9500;color:white;}
+.fn{background:#555;color:white;}
+.unitBtn{background:#0a84ff;color:white;margin-bottom:4px;width:100%;}
+.hisBtn{background:#30d158;color:black;margin-bottom:4px;width:100%;}
+
+select,input{
+  width:100%;
+  margin:4px 0;
+  height:30px;
+}
+.histItem{
+  background:#333;
+  padding:6px;
+  margin:4px 0;
+  border-radius:6px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- CALCULATOR -->
+<div class="calculator">
+  <input id="display" disabled>
+
+  <button class="unitBtn" onclick="toggleUnit()">UNIT</button>
+  <button class="hisBtn" onclick="toggleHistory()">HISTORY</button>
+
+  <div class="grid">
+    <button class="fn" onclick="clearDisplay()">C</button>
+    <button class="fn" onclick="del()">DEL</button>
+    <button class="fn" onclick="percent()">%</button>
+    <button class="op" onclick="append('/')">÷</button>
+
+    <button class="num" onclick="append('7')">7</button>
+    <button class="num" onclick="append('8')">8</button>
+    <button class="num" onclick="append('9')">9</button>
+    <button class="op" onclick="append('*')">×</button>
+
+    <button class="num" onclick="append('4')">4</button>
+    <button class="num" onclick="append('5')">5</button>
+    <button class="num" onclick="append('6')">6</button>
+    <button class="op" onclick="append('-')">−</button>
+
+    <button class="num" onclick="append('1')">1</button>
+    <button class="num" onclick="append('2')">2</button>
+    <button class="num" onclick="append('3')">3</button>
+    <button class="op" onclick="append('+')">+</button>
+
+    <button class="num" onclick="append('0')">0</button>
+    <button class="num" onclick="append('.')">.</button>
+    <button class="op" style="grid-column: span 2;" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<!-- UNIT -->
+<div class="unit" id="unitBox">
+  <h4>Unit Converter</h4>
+  <select id="type" onchange="loadUnits()">
+    <option value="len">Length</option>
+    <option value="wt">Weight</option>
+    <option value="temp">Temp</option>
+  </select>
+  <input id="uval" placeholder="Value" oninput="convert()">
+  <select id="from" onchange="convert()"></select>
+  <select id="to" onchange="convert()"></select>
+  <input id="ures" placeholder="Result" disabled>
+</div>
+
+<!-- HISTORY -->
+<div class="history" id="historyBox">
+  <h4>History</h4>
+  <button class="fn" style="width:100%;" onclick="clearHistory()">Clear History</button>
+  <div id="historyList"></div>
+</div>
+
+</div>
+
+<script>
+let d=document.getElementById("display");
+let history=[];
+
+function append(v){ d.value+=v; }
+function clearDisplay(){ d.value=""; }
+function del(){ d.value=d.value.slice(0,-1); }
+
+function calculate(){
+  try{
+    let exp=d.value;
+    let res=eval(exp);
+    d.value=res;
+    history.unshift(exp+" = "+res);
+    renderHistory();
+  }catch{
+    d.value="Error";
+  }
+}
+function percent(){
+  if(d.value!="") d.value=parseFloat(d.value)/100;
+}
+
+function toggleUnit(){
+  unitBox.classList.toggle("open");
+  loadUnits();
+}
+function toggleHistory(){
+  historyBox.classList.toggle("open");
+}
+
+function renderHistory(){
+  historyList.innerHTML="";
+  history.slice(0,20).forEach(h=>{
+    let div=document.createElement("div");
+    div.className="histItem";
+    div.innerText=h;
+    historyList.appendChild(div);
+  });
+}
+function clearHistory(){
+  history=[];
+  renderHistory();
+}
+
+/* UNIT */
+function loadUnits(){
+  from.innerHTML=""; to.innerHTML="";
+  let arr=[];
+  if(type.value=="len") arr=["cm","m","km"];
+  if(type.value=="wt") arr=["g","kg"];
+  if(type.value=="temp") arr=["C","F"];
+  arr.forEach(u=>{
+    from.add(new Option(u,u));
+    to.add(new Option(u,u));
+  });
+  convert();
+}
+function convert(){
+  let v=parseFloat(uval.value)||0;
+  let f=from.value, t=to.value, r=v;
+  if(type.value=="len"){
+    if(f=="cm") r=v/100;
+    if(f=="km") r=v*1000;
+    if(t=="cm") r*=100;
+    if(t=="km") r/=1000;
+  }
+  if(type.value=="wt"){
+    if(f=="g") r=v/1000;
+    if(t=="g") r*=1000;
+  }
+  if(type.value=="temp"){
+    if(f=="C"&&t=="F") r=v*9/5+32;
+    if(f=="F"&&t=="C") r=(v-32)*5/9;
+  }
+  ures.value=r;
+}
+</script>
+
+</body>
+</html>
+
